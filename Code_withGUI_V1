@@ -1,0 +1,123 @@
+#include "raylib.h"
+#include <array>
+
+enum class CellState { Empty, X, O };
+
+class Board {
+private:
+    std::array<CellState, 9> cells;
+
+public:
+    Board() { cells.fill(CellState::Empty); }
+
+    bool makeMove(int index, CellState state) {
+        if (index < 0 || index >= 9 || cells[index] != CellState::Empty) return false;
+        cells[index] = state;
+        return true;
+    }
+
+    bool isFull() const {
+        for (auto cell : cells)
+            if (cell == CellState::Empty)
+                return false;
+        return true;
+    }
+
+    CellState checkWinner() const {
+        const int winCombos[8][3] = {
+            {0,1,2}, {3,4,5}, {6,7,8}, // Rows
+            {0,3,6}, {1,4,7}, {2,5,8}, // Cols
+            {0,4,8}, {2,4,6}           // Diagonals
+        };
+        for (auto& combo : winCombos) {
+            if (cells[combo[0]] != CellState::Empty &&
+                cells[combo[0]] == cells[combo[1]] &&
+                cells[combo[1]] == cells[combo[2]]) {
+                return cells[combo[0]];
+            }
+        }
+        return CellState::Empty;
+    }
+
+    CellState getCell(int index) const { return cells[index]; }
+};
+
+int main() {
+    const int screenWidth = 300;
+    const int screenHeight = 300;
+
+    InitWindow(screenWidth, screenHeight, "Tic Tac Toe");
+    SetTargetFPS(60);
+
+    Board board;
+    CellState currentPlayer = CellState::X;
+    bool gameOver = false;
+
+    while (!WindowShouldClose()) {
+        // Handle mouse click
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !gameOver) {
+            Vector2 mousePos = GetMousePosition();
+            int index = (int)(mousePos.y/100)*3 + (int)(mousePos.x/100);
+
+            if (board.makeMove(index, currentPlayer)) {
+                currentPlayer = (currentPlayer == CellState::X) ? CellState::O : CellState::X;
+                
+                // Check game status
+                CellState winner = board.checkWinner();
+                if (winner != CellState::Empty) {
+                    gameOver = true;
+                } else if (board.isFull()) {
+                    gameOver = true;
+                }
+            }
+        }
+
+        // Reset game on R key press
+        if (IsKeyPressed(KEY_R)) {
+            board = Board();
+            currentPlayer = CellState::X;
+            gameOver = false;
+        }
+
+        // Draw
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
+
+            // Draw grid
+            for (int i = 1; i < 3; i++) {
+                DrawLine(i*100, 0, i*100, 300, BLACK);
+                DrawLine(0, i*100, 300, i*100, BLACK);
+            }
+
+            // Draw X's and O's
+            for (int i = 0; i < 9; i++) {
+                CellState cell = board.getCell(i);
+                int x = (i%3)*100 + 50;
+                int y = (i/3)*100 + 50;
+
+                if (cell == CellState::X) {
+                    DrawLine(x-30, y-30, x+30, y+30, RED);
+                    DrawLine(x+30, y-30, x-30, y+30, RED);
+                } else if (cell == CellState::O) {
+                    DrawCircle(x, y, 30, BLUE);
+                    DrawCircle(x, y, 25, RAYWHITE);
+                }
+            }
+
+            // Game over message
+            if (gameOver) {
+                CellState winner = board.checkWinner();
+                if (winner != CellState::Empty) {
+                    DrawText(winner == CellState::X ? "X Wins!" : "O Wins!", 100, 130, 20, DARKGRAY);
+                } else {
+                    DrawText("Draw!", 120, 130, 20, DARKGRAY);
+                }
+                DrawText("Press R to restart", 80, 160, 15, GRAY);
+            }
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
