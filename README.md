@@ -2,7 +2,7 @@
 
 A simple **Tic-Tac-Toe** game built in C++ using the **Raylib** library for graphics.
 
-![Tic-Tac-Toe Screenshot](screenshot.png)
+<img src="Screenshot%202025-05-02%20222145.png" width="400">
 
 ## 🚀 Features
 - **2-player mode** (X and O)
